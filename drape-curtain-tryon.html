@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Drape — Curtain Try-On</title>
+<style>
+  :root{
+    --bg:#FAF8F4;
+    --bg-panel:#FFFFFF;
+    --ink:#2A2826;
+    --ink-soft:#6B6660;
+    --ink-faint:#B3ADA4;
+    --line:#E6E1D8;
+    --sage:#7A8B6F;
+    --sage-dark:#5E6E54;
+    --terracotta:#C17A52;
+    --terracotta-dark:#A1623E;
+    --cream:#F1ECE1;
+    --danger:#B5544A;
+    --radius-s:6px;
+    --radius-m:10px;
+    --radius-l:18px;
+    --shadow-soft:0 1px 2px rgba(42,40,38,0.06), 0 8px 24px rgba(42,40,38,0.06);
+    --serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, Georgia, 'Times New Roman', serif;
+    --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Roboto, Helvetica, Arial, sans-serif;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    font-family:var(--sans);
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
+  }
+ 
+  /* ---------- Top bar ---------- */
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:22px 40px;
+    border-bottom:1px solid var(--line);
+    background:var(--bg);
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .brand{
+    display:flex;
+    align-items:baseline;
+    gap:10px;
+  }
+  .brand-mark{
+    font-family:var(--serif);
+    font-size:26px;
+    letter-spacing:0.5px;
+    font-weight:400;
+    color:var(--ink);
+  }
+  .brand-tag{
+    font-size:12px;
+    color:var(--ink-faint);
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+  }
+  .mode-switch{
+    display:flex;
+    gap:2px;
+    background:var(--cream);
+    border-radius:999px;
+    padding:3px;
+  }
+  .mode-switch button{
+    border:none;
+    background:transparent;
+    font-family:var(--sans);
+    font-size:13px;
+    padding:7px 18px;
+    border-radius:999px;
+    cursor:pointer;
+    color:var(--ink-soft);
+    transition:background 0.15s ease, color 0.15s ease;
+  }
+  .mode-switch button.active{
+    background:var(--ink);
+    color:#fff;
+  }
+ 
+  /* ---------- Layout shells ---------- */
+  .view{
+    display:none;
+    max-width:1180px;
+    margin:0 auto;
+    padding:48px 40px 100px;
+  }
+  .view.active{display:block;}
+ 
+  /* ---------- Customer hero ---------- */
+  .hero{
+    text-align:center;
+    max-width:620px;
+    margin:0 auto 48px;
+  }
+  .hero h1{
+    font-family:var(--serif);
+    font-size:38px;
+    font-weight:400;
+    line-height:1.25;
+    margin:0 0 14px;
+  }
+  .hero p{
+    font-size:15.5px;
+    color:var(--ink-soft);
+    line-height:1.65;
+    margin:0;
+  }
+ 
+  /* ---------- Workspace ---------- */
+  .workspace{
+    display:grid;
+    grid-template-columns:1fr 320px;
+    gap:32px;
+    align-items:start;
+  }
+  @media (max-width:860px){
+    .workspace{grid-template-columns:1fr;}
+    .topbar{padding:16px 20px;}
+    .view{padding:32px 20px 80px;}
+    .hero h1{font-size:30px;}
+    .hero{margin-bottom:32px;}
+    .swatch-panel{margin-top:8px;}
+    .swatch-grid{max-height:none;}
+  }
+ 
+  @media (max-width:480px){
+    .brand-tag{display:none;}
+    .brand-mark{font-size:22px;}
+    .mode-switch button{padding:7px 13px;font-size:12.5px;}
+    .view{padding:24px 14px 64px;}
+    .hero h1{font-size:24px;line-height:1.3;}
+    .hero p{font-size:14px;}
+    .stage-card{padding:12px;}
+    .stage{min-height:300px;}
+    .stage-actions{flex-direction:column;align-items:flex-start;gap:10px;}
+    .swatch-grid{grid-template-columns:1fr 1fr;gap:8px;}
+    .swatch-thumb{height:58px;}
+    .admin-head{flex-direction:column;align-items:flex-start;}
+    .admin-head h1{font-size:22px;}
+    .btn-primary{width:100%;justify-content:center;}
+    .admin-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:10px;}
+    .toast{left:14px;right:14px;transform:translateY(20px);width:auto;text-align:center;}
+    .toast.show{transform:translateY(0);}
+ 
+    /* Bigger touch targets for curtain controls — visual size stays via inner dot, hit area grows */
+    .handle{width:24px;height:24px;}
+    .handle.resize-br{right:-12px;bottom:-12px;}
+    .handle.resize-bl{left:-12px;bottom:-12px;}
+    .handle.rotate{top:-36px;}
+    .handle.rotate::before{left:11px;top:20px;height:16px;}
+    .remove-curtain{width:28px;height:28px;font-size:15px;top:-36px;right:-12px;}
+    .duplicate-curtain{width:28px;height:28px;top:-36px;right:24px;}
+    .duplicate-curtain svg{width:14px;height:14px;}
+    .upload-prompt{padding:24px 16px;}
+  }
+ 
+  .stage-card{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-l);
+    padding:20px;
+    box-shadow:var(--shadow-soft);
+  }
+  .stage{
+    position:relative;
+    width:100%;
+    min-height:420px;
+    border-radius:var(--radius-m);
+    background:var(--cream);
+    overflow:hidden;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    touch-action:none;
+  }
+  .stage.has-photo{background:#1c1b19;}
+ 
+  .stage img.room-photo{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    object-fit:contain;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+ 
+  .upload-prompt{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:14px;
+    padding:40px;
+    text-align:center;
+    cursor:pointer;
+    color:var(--ink-soft);
+  }
+  .upload-prompt .icon-circle{
+    width:54px;
+    height:54px;
+    border-radius:50%;
+    background:#fff;
+    border:1px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .upload-prompt .icon-circle svg{width:22px;height:22px;stroke:var(--sage-dark);}
+  .upload-prompt strong{color:var(--ink);font-size:15px;font-weight:500;}
+  .upload-prompt span.sub{font-size:13px;}
+  .upload-prompt input{display:none;}
+ 
+  /* curtain overlay element */
+  .curtain-layer{
+    position:absolute;
+    cursor:grab;
+    touch-action:none;
+  }
+  .curtain-layer.dragging{cursor:grabbing;}
+  .curtain-fabric{
+    width:100%;
+    height:100%;
+    border-radius:2px 2px 6px 6px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    position:relative;
+    overflow:hidden;
+  }
+  .curtain-fabric::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:repeating-linear-gradient(
+      90deg,
+      rgba(0,0,0,0.16) 0px,
+      rgba(0,0,0,0.16) 2px,
+      rgba(255,255,255,0.10) 2px,
+      rgba(255,255,255,0.10) 9px,
+      rgba(0,0,0,0.05) 9px,
+      rgba(0,0,0,0.05) 16px
+    );
+    mix-blend-mode:multiply;
+    pointer-events:none;
+  }
+  .curtain-fabric::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 90%);
+    pointer-events:none;
+  }
+  .curtain-fabric.with-rod{
+    border-radius:1px 1px 6px 6px;
+  }
+  .curtain-fabric.with-rod .header-pleats{
+    position:absolute;
+    top:0;
+    left:0;
+    right:0;
+    height:9%;
+    min-height:10px;
+    background:repeating-linear-gradient(
+      90deg,
+      rgba(0,0,0,0.28) 0%,
+      rgba(0,0,0,0.28) 8%,
+      rgba(255,255,255,0.22) 8%,
+      rgba(255,255,255,0.22) 14%
+    );
+    border-bottom:1px solid rgba(0,0,0,0.25);
+    pointer-events:none;
+  }
+ 
+  .handle{
+    position:absolute;
+    width:16px;
+    height:16px;
+    background:#fff;
+    border:2px solid var(--terracotta);
+    border-radius:50%;
+    z-index:5;
+  }
+  .handle.resize-br{right:-8px;bottom:-8px;cursor:nwse-resize;}
+  .handle.resize-bl{left:-8px;bottom:-8px;cursor:nesw-resize;}
+  .handle.rotate{
+    top:-30px;
+    left:50%;
+    transform:translateX(-50%);
+    cursor:grab;
+    border-color:var(--sage-dark);
+  }
+  .handle.rotate::before{
+    content:"";
+    position:absolute;
+    width:2px;
+    height:16px;
+    background:var(--sage-dark);
+    left:7px;
+    top:14px;
+  }
+  .remove-curtain{
+    position:absolute;
+    top:-30px;
+    right:-8px;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    font-size:13px;
+    line-height:1;
+    z-index:6;
+  }
+  .duplicate-curtain{
+    position:absolute;
+    top:-30px;
+    right:20px;
+    width:22px;
+    height:22px;
+    border-radius:50%;
+    background:#fff;
+    color:var(--ink);
+    border:1.5px solid var(--line);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    z-index:6;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .duplicate-curtain:hover{
+    border-color:var(--sage-dark);
+    color:var(--sage-dark);
+  }
+ 
+  /* curtain wand / rod — runs across the top, holding the curtain up */
+  .curtain-wand{
+    position:absolute;
+    top:-7px;
+    left:-6%;
+    right:-6%;
+    height:5px;
+    background:linear-gradient(180deg, #d8d3c8, #8a8580 55%, #6e6a64);
+    border-radius:3px;
+    box-shadow:0 1px 3px rgba(0,0,0,0.4);
+    pointer-events:none;
+    z-index:3;
+  }
+  .curtain-wand::before,
+  .curtain-wand::after{
+    /* finials — the end caps of the rod */
+    content:"";
+    position:absolute;
+    top:50%;
+    width:11px;
+    height:11px;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #e8e3d8, #8a8580 70%);
+    box-shadow:0 1px 2px rgba(0,0,0,0.35);
+    transform:translateY(-50%);
+  }
+  .curtain-wand::before{ left:-5px; }
+  .curtain-wand::after{ right:-5px; }
+ 
+  .stage-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:14px;
+    padding:0 4px;
+  }
+  .stage-hint{
+    font-size:12.5px;
+    color:var(--ink-faint);
+  }
+  .ghost-btn{
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:var(--radius-s);
+    padding:8px 14px;
+    font-size:13px;
+    font-family:var(--sans);
+    color:var(--ink-soft);
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease;
+  }
+  .ghost-btn:hover{border-color:var(--ink-faint);color:var(--ink);}
+ 
+  /* ---------- Swatch rail ---------- */
+  .swatch-panel h2{
+    font-family:var(--serif);
+    font-size:18px;
+    font-weight:400;
+    margin:0 0 4px;
+  }
+  .swatch-panel .panel-sub{
+    font-size:13px;
+    color:var(--ink-soft);
+    margin:0 0 16px;
+  }
+ 
+  .wand-toggle{
+    margin:0 0 18px;
+    padding:12px 14px;
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-m);
+  }
+  .wand-toggle-label{
+    font-size:12.5px;
+    font-weight:500;
+    color:var(--ink);
+    margin:0 0 9px;
+    display:block;
+  }
+  .wand-options{
+    display:flex;
+    gap:6px;
+  }
+  .wand-options button{
+    flex:1;
+    border:1px solid var(--line);
+    background:var(--cream);
+    color:var(--ink-soft);
+    font-family:var(--sans);
+    font-size:12.5px;
+    padding:7px 8px;
+    border-radius:var(--radius-s);
+    cursor:pointer;
+    transition:border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+  }
+  .wand-options button.active{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:#fff;
+  }
+  .swatch-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:10px;
+    max-height:560px;
+    overflow-y:auto;
+    padding-right:4px;
+  }
+  .swatch-card{
+    border:1px solid var(--line);
+    border-radius:var(--radius-m);
+    background:var(--bg-panel);
+    padding:8px;
+    cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.1s ease;
+    text-align:left;
+  }
+  .swatch-card:hover{border-color:var(--sage);}
+  .swatch-card.selected{border-color:var(--terracotta);border-width:1.5px;}
+  .swatch-thumb{
+    width:100%;
+    height:70px;
+    border-radius:var(--radius-s);
+    background-size:cover;
+    background-position:center;
+    margin-bottom:8px;
+    border:1px solid var(--line);
+  }
+  .swatch-name{
+    font-size:12.5px;
+    font-weight:500;
+    margin:0 0 2px;
+    color:var(--ink);
+  }
+  .swatch-price{
+    font-size:11.5px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .empty-catalog{
+    border:1px dashed var(--line);
+    border-radius:var(--radius-m);
+    padding:28px 16px;
+    text-align:center;
+    color:var(--ink-soft);
+    font-size:13px;
+    line-height:1.6;
+  }
+ 
+  /* ---------- Admin view ---------- */
+  .admin-head{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-end;
+    margin-bottom:28px;
+    flex-wrap:wrap;
+    gap:14px;
+  }
+  .admin-head h1{
+    font-family:var(--serif);
+    font-size:28px;
+    font-weight:400;
+    margin:0 0 6px;
+  }
+  .admin-head p{
+    font-size:13.5px;
+    color:var(--ink-soft);
+    margin:0;
+  }
+  .btn-primary{
+    background:var(--ink);
+    color:#fff;
+    border:none;
+    border-radius:var(--radius-s);
+    padding:11px 20px;
+    font-size:13.5px;
+    font-family:var(--sans);
+    cursor:pointer;
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
+    transition:background 0.15s ease;
+  }
+  .btn-primary:hover{background:var(--terracotta-dark);}
+  .btn-primary input{display:none;}
+ 
+  .admin-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
+    gap:16px;
+  }
+  .admin-card{
+    background:var(--bg-panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius-m);
+    overflow:hidden;
+  }
+  .admin-card .thumb{
+    width:100%;
+    height:130px;
+    background-size:cover;
+    background-position:center;
+    border-bottom:1px solid var(--line);
+  }
+  .admin-card .body{
+    padding:12px 14px 14px;
+  }
+  .admin-card .field{
+    width:100%;
+    border:none;
+    background:transparent;
+    font-family:var(--sans);
+    padding:3px 0;
+    color:var(--ink);
+  }
+  .admin-card .field.name{
+    font-size:14px;
+    font-weight:500;
+  }
+  .admin-card .field.price{
+    font-size:13px;
+    color:var(--ink-soft);
+  }
+  .admin-card .row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:8px;
+  }
+  .icon-btn{
+    background:transparent;
+    border:none;
+    color:var(--ink-faint);
+    cursor:pointer;
+    padding:4px;
+    display:flex;
+    align-items:center;
+  }
+  .icon-btn:hover{color:var(--danger);}
+  .icon-btn svg{width:16px;height:16px;}
+ 
+  .admin-empty{
+    grid-column:1/-1;
+    text-align:center;
+    padding:64px 20px;
+    color:var(--ink-soft);
+  }
+  .admin-empty .icon-circle{
+    width:54px;height:54px;border-radius:50%;
+    background:var(--cream);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px;
+  }
+  .admin-empty .icon-circle svg{width:22px;height:22px;stroke:var(--sage-dark);}
+ 
+  .toast{
+    position:fixed;
+    bottom:28px;
+    left:50%;
+    transform:translateX(-50%) translateY(20px);
+    background:var(--ink);
+    color:#fff;
+    padding:11px 20px;
+    border-radius:999px;
+    font-size:13px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity 0.2s ease, transform 0.2s ease;
+    z-index:50;
+  }
+  .toast.show{
+    opacity:1;
+    transform:translateX(-50%) translateY(0);
+  }
+ 
+  .footer-note{
+    text-align:center;
+    margin-top:60px;
+    font-size:12px;
+    color:var(--ink-faint);
+  }
+ 
+  .visually-hidden{
+    position:absolute;
+    width:1px;height:1px;
+    overflow:hidden;
+    clip:rect(0,0,0,0);
+  }
+ 
+  :focus-visible{
+    outline:2px solid var(--sage-dark);
+    outline-offset:2px;
+  }
+</style>
+</head>
+<body>
+ 
+<div class="topbar">
+  <div class="brand">
+    <span class="brand-mark">Drape</span>
+    <span class="brand-tag">try before you buy</span>
+  </div>
+  <div class="mode-switch" role="tablist" aria-label="View switch">
+    <button id="tab-customer" class="active" role="tab" aria-selected="true">Try on curtains</button>
+    <button id="tab-admin" role="tab" aria-selected="false">Catalog admin</button>
+  </div>
+</div>
+ 
+<!-- ===================== CUSTOMER VIEW ===================== -->
+<main class="view active" id="view-customer">
+  <div class="hero">
+    <h1>See it on your window<br>before it's on order</h1>
+    <p>Upload a photo of your window, pick a fabric from the collection, then drag, resize, and rotate it into place.</p>
+  </div>
+ 
+  <div class="workspace">
+    <div class="stage-card">
+      <div class="stage" id="stage">
+        <label class="upload-prompt" id="upload-prompt" for="photo-input">
+          <span class="icon-circle">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg>
+          </span>
+          <strong>Upload a photo of your window</strong>
+          <span class="sub">JPG or PNG &middot; the curtain will land near the top automatically</span>
+          <input type="file" id="photo-input" accept="image/*">
+        </label>
+      </div>
+      <div class="stage-actions">
+        <span class="stage-hint" id="stage-hint">Drag the corner to resize, the top handle to rotate.</span>
+        <button class="ghost-btn" id="change-photo-btn" style="display:none;">Change photo</button>
+      </div>
+    </div>
+ 
+    <div class="swatch-panel">
+      <h2>Collection</h2>
+      <p class="panel-sub">Tap a fabric to place it on your window.</p>
+ 
+      <div class="wand-toggle">
+        <span class="wand-toggle-label">Curtain wand</span>
+        <div class="wand-options" role="group" aria-label="Curtain wand preference">
+          <button type="button" id="wand-yes" data-value="yes">With wand</button>
+          <button type="button" id="wand-no" class="active" data-value="no">Without wand</button>
+        </div>
+      </div>
+ 
+      <div class="swatch-grid" id="swatch-grid">
+        <!-- populated by JS -->
+      </div>
+    </div>
+  </div>
+ 
+  <p class="footer-note">Placement is an approximation to help you compare colors and styles &mdash; actual fit depends on your measurements.</p>
+</main>
+ 
+<!-- ===================== ADMIN VIEW ===================== -->
+<main class="view" id="view-admin">
+  <div class="admin-head">
+    <div>
+      <h1>Catalog admin</h1>
+      <p>Upload the curtains you stock. They'll appear in the collection rail for every customer.</p>
+    </div>
+    <label class="btn-primary">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 5v14M5 12h14"/></svg>
+      Add curtain
+      <input type="file" id="admin-upload-input" accept="image/*" multiple>
+    </label>
+  </div>
+ 
+  <div class="admin-grid" id="admin-grid">
+    <!-- populated by JS -->
+  </div>
+</main>
+ 
+<div class="toast" id="toast"></div>
+ 
+<script>
+(function(){
+  "use strict";
+ 
+  // ---------- State ----------
+  var catalog = [];          // [{id, name, price, image}]
+  var roomPhotoDataUrl = null;
+  var curtains = [];         // [{id, image, x, y, w, h, rotation, mirrored}]
+  var activeCurtainId = null; // which one was placed/duplicated most recently (for "select fabric" UX)
+  var wandPreference = "no"; // "yes" | "no" — customer's stated preference, included if you add ordering later
+  var dragState = null;
+ 
+  // ---------- Supabase configuration ----------
+  // Fill these in with your own project's values (Project Settings → API in the Supabase dashboard).
+  // The anon/public key is safe to expose in client-side code — it only allows what your
+  // table's Row Level Security policies permit (see setup instructions provided separately).
+  var SUPABASE_URL = "https://gqniatqsznfsysewawqa.supabase.co";
+  var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbmlhdHFzem5mc3lzZXdhd3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5MzMyMDQsImV4cCI6MjA5NzUwOTIwNH0.NBO1yUybQvvknjbbQl420D1P0HU5cBEU2_K3m5jXkxc";
+  var SUPABASE_TABLE = "curtains";
+ 
+  // ---------- Elements ----------
+  var tabCustomer = document.getElementById("tab-customer");
+  var tabAdmin = document.getElementById("tab-admin");
+  var viewCustomer = document.getElementById("view-customer");
+  var viewAdmin = document.getElementById("view-admin");
+ 
+  var stage = document.getElementById("stage");
+  var uploadPrompt = document.getElementById("upload-prompt");
+  var photoInput = document.getElementById("photo-input");
+  var changePhotoBtn = document.getElementById("change-photo-btn");
+  var stageHint = document.getElementById("stage-hint");
+  var swatchGrid = document.getElementById("swatch-grid");
+  var wandYesBtn = document.getElementById("wand-yes");
+  var wandNoBtn = document.getElementById("wand-no");
+ 
+  var adminGrid = document.getElementById("admin-grid");
+  var adminUploadInput = document.getElementById("admin-upload-input");
+ 
+  var toastEl = document.getElementById("toast");
+ 
+  // ---------- Utilities ----------
+  function showToast(msg){
+    toastEl.textContent = msg;
+    toastEl.classList.add("show");
+    clearTimeout(toastEl._t);
+    toastEl._t = setTimeout(function(){ toastEl.classList.remove("show"); }, 2200);
+  }
+ 
+  function uid(){
+    return "c_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
+  }
+ 
+  function fileToDataUrl(file){
+    return new Promise(function(resolve, reject){
+      var reader = new FileReader();
+      reader.onload = function(){ resolve(reader.result); };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+ 
+  // Downscale large images so storage stays well under limits
+  function fileToCompressedDataUrl(file, maxDim){
+    maxDim = maxDim || 1000;
+    return fileToDataUrl(file).then(function(rawUrl){
+      return new Promise(function(resolve){
+        var img = new Image();
+        img.onload = function(){
+          var w = img.naturalWidth, h = img.naturalHeight;
+          var scale = Math.min(1, maxDim / Math.max(w, h));
+          var cw = Math.max(1, Math.round(w * scale));
+          var ch = Math.max(1, Math.round(h * scale));
+          var canvas = document.createElement("canvas");
+          canvas.width = cw; canvas.height = ch;
+          var ctx = canvas.getContext("2d");
+          ctx.drawImage(img, 0, 0, cw, ch);
+          var quality = file.type === "image/png" ? 0.92 : 0.85;
+          resolve(canvas.toDataURL(file.type === "image/png" ? "image/png" : "image/jpeg", quality));
+        };
+        img.onerror = function(){ resolve(rawUrl); };
+        img.src = rawUrl;
+      });
+    });
+  }
+ 
+  // ---------- Storage (Supabase — shared catalog, persists across hosting/devices) ----------
+  function supabaseHeaders(){
+    return {
+      "Content-Type": "application/json",
+      "apikey": SUPABASE_ANON_KEY,
+      "Authorization": "Bearer " + SUPABASE_ANON_KEY
+    };
+  }
+ 
+  function loadCatalog(){
+    return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE + "?select=*&order=created_at.asc", {
+      method: "GET",
+      headers: supabaseHeaders()
+    })
+      .then(function(res){
+        if(!res.ok) throw new Error("Load failed: " + res.status);
+        return res.json();
+      })
+      .then(function(rows){
+        catalog = rows.map(function(row){
+          return { id: row.id, name: row.name, price: row.price, image: row.image };
+        });
+      })
+      .catch(function(err){
+        console.error("Supabase load error:", err);
+        catalog = [];
+        showToast("Couldn't load the catalog — check the connection.");
+      });
+  }
+ 
+  function addCurtainToDb(item){
+    return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE, {
+      method: "POST",
+      headers: Object.assign(supabaseHeaders(), { "Prefer": "return=representation" }),
+      body: JSON.stringify({ name: item.name, price: item.price, image: item.image })
+    })
+      .then(function(res){
+        if(!res.ok) throw new Error("Insert failed: " + res.status);
+        return res.json();
+      })
+      .then(function(rows){
+        return rows[0]; // contains the real database id
+      })
+      .catch(function(err){
+        console.error("Supabase insert error:", err);
+        showToast("Couldn't save — try a smaller image.");
+        return null;
+      });
+  }
+ 
+  function updateCurtainInDb(id, fields){
+    return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE + "?id=eq." + encodeURIComponent(id), {
+      method: "PATCH",
+      headers: supabaseHeaders(),
+      body: JSON.stringify(fields)
+    })
+      .then(function(res){
+        if(!res.ok) throw new Error("Update failed: " + res.status);
+      })
+      .catch(function(err){
+        console.error("Supabase update error:", err);
+        showToast("Couldn't save that change.");
+      });
+  }
+ 
+  function deleteCurtainFromDb(id){
+    return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE + "?id=eq." + encodeURIComponent(id), {
+      method: "DELETE",
+      headers: supabaseHeaders()
+    })
+      .then(function(res){
+        if(!res.ok) throw new Error("Delete failed: " + res.status);
+      })
+      .catch(function(err){
+        console.error("Supabase delete error:", err);
+        showToast("Couldn't remove that item — try again.");
+      });
+  }
+ 
+  // ---------- Tab switching ----------
+  function setMode(mode){
+    var isAdmin = mode === "admin";
+    viewCustomer.classList.toggle("active", !isAdmin);
+    viewAdmin.classList.toggle("active", isAdmin);
+    tabCustomer.classList.toggle("active", !isAdmin);
+    tabAdmin.classList.toggle("active", isAdmin);
+    tabCustomer.setAttribute("aria-selected", String(!isAdmin));
+    tabAdmin.setAttribute("aria-selected", String(isAdmin));
+  }
+  tabCustomer.addEventListener("click", function(){ setMode("customer"); });
+  tabAdmin.addEventListener("click", function(){ setMode("admin"); renderAdmin(); });
+ 
+  // ---------- Customer: photo upload ----------
+  function handlePhotoFile(file){
+    if(!file) return;
+    fileToCompressedDataUrl(file, 1400).then(function(dataUrl){
+      roomPhotoDataUrl = dataUrl;
+      curtains = [];
+      activeCurtainId = null;
+      renderStage();
+      changePhotoBtn.style.display = "inline-block";
+    });
+  }
+ 
+  photoInput.addEventListener("change", function(e){
+    handlePhotoFile(e.target.files[0]);
+  });
+ 
+  changePhotoBtn.addEventListener("click", function(){
+    photoInput.value = "";
+    photoInput.click();
+  });
+ 
+  // ---------- Curtain wand preference ----------
+  function setWandPreference(value){
+    wandPreference = value;
+    wandYesBtn.classList.toggle("active", value === "yes");
+    wandNoBtn.classList.toggle("active", value === "no");
+    if(curtains.length){
+      renderAllCurtainLayers();
+    }
+  }
+  wandYesBtn.addEventListener("click", function(){ setWandPreference("yes"); });
+  wandNoBtn.addEventListener("click", function(){ setWandPreference("no"); });
+ 
+  function renderStage(){
+    stage.innerHTML = "";
+    if(!roomPhotoDataUrl){
+      stage.classList.remove("has-photo");
+      stage.appendChild(uploadPrompt);
+      stageHint.textContent = "Drag the corner to resize, the top handle to rotate.";
+      return;
+    }
+    stage.classList.add("has-photo");
+    var img = document.createElement("img");
+    img.src = roomPhotoDataUrl;
+    img.className = "room-photo";
+    img.alt = "Your uploaded window photo";
+    stage.appendChild(img);
+ 
+    if(curtains.length){
+      renderAllCurtainLayers();
+    } else {
+      stageHint.textContent = "Pick a fabric from the collection to place it on your window.";
+    }
+  }
+ 
+  // ---------- Customer: curtain placement ----------
+  function defaultPlacementForStage(){
+    var rect = stage.getBoundingClientRect();
+    // Smart default: upper-middle portion of the frame, sized like a window curtain
+    var w = rect.width * 0.34;
+    var h = rect.height * 0.6;
+    var x = rect.width * 0.5 - w / 2;
+    // Leave enough headroom for the control buttons that sit above the curtain (rotate handle, remove, duplicate)
+    var y = Math.max(rect.height * 0.06, 44);
+    return { x: x, y: y, w: w, h: h, rotation: 0 };
+  }
+ 
+  function findCurtain(id){
+    for(var i = 0; i < curtains.length; i++){
+      if(curtains[i].id === id) return curtains[i];
+    }
+    return null;
+  }
+ 
+  function selectCurtain(item){
+    if(!roomPhotoDataUrl){
+      showToast("Upload a window photo first.");
+      return;
+    }
+    // If there's an active curtain, swap its fabric. Otherwise place a new one.
+    var active = activeCurtainId ? findCurtain(activeCurtainId) : null;
+    if(active){
+      active.image = item.image;
+    } else {
+      var pos = defaultPlacementForStage();
+      var newCurtain = {
+        id: uid(),
+        image: item.image,
+        x: pos.x, y: pos.y, w: pos.w, h: pos.h, rotation: pos.rotation,
+        mirrored: false
+      };
+      curtains.push(newCurtain);
+      activeCurtainId = newCurtain.id;
+    }
+    renderStage();
+    highlightSelectedSwatch(item.id);
+    stageHint.textContent = curtains.length > 1
+      ? "Drag either panel to move it, duplicate again for more."
+      : "Drag to move, corner to resize, top handle to rotate.";
+  }
+ 
+  function highlightSelectedSwatch(id){
+    var cards = swatchGrid.querySelectorAll(".swatch-card");
+    cards.forEach(function(c){
+      c.classList.toggle("selected", c.getAttribute("data-id") === id);
+    });
+  }
+ 
+  function duplicateCurtain(id){
+    var source = findCurtain(id);
+    if(!source) return;
+    var rect = stage.getBoundingClientRect();
+ 
+    // Mirror placement to the opposite side of the stage, flipped horizontally —
+    // mimics a matching curtain panel on the other side of a window.
+    var mirroredX = rect.width - source.x - source.w;
+ 
+    var copy = {
+      id: uid(),
+      image: source.image,
+      x: Math.max(0, Math.min(mirroredX, rect.width - source.w)),
+      y: source.y,
+      w: source.w,
+      h: source.h,
+      rotation: -source.rotation,
+      mirrored: !source.mirrored
+    };
+    curtains.push(copy);
+    activeCurtainId = copy.id;
+    renderStage();
+    stageHint.textContent = "Drag either panel to fine-tune its side of the window.";
+    showToast("Duplicated and mirrored to the other side.");
+  }
+ 
+  function removeCurtain(id){
+    curtains = curtains.filter(function(c){ return c.id !== id; });
+    if(activeCurtainId === id){
+      activeCurtainId = curtains.length ? curtains[curtains.length - 1].id : null;
+    }
+    renderStage();
+    if(curtains.length === 0) highlightSelectedSwatch(null);
+  }
+ 
+  function renderAllCurtainLayers(){
+    var existingLayers = stage.querySelectorAll(".curtain-layer");
+    existingLayers.forEach(function(el){ el.remove(); });
+    curtains.forEach(function(curtain){
+      renderCurtainLayer(curtain);
+    });
+  }
+ 
+  function renderCurtainLayer(curtain){
+    var layer = document.createElement("div");
+    layer.className = "curtain-layer";
+    layer.setAttribute("data-curtain-id", curtain.id);
+    layer.style.left = curtain.x + "px";
+    layer.style.top = curtain.y + "px";
+    layer.style.width = curtain.w + "px";
+    layer.style.height = curtain.h + "px";
+    layer.style.transform = "rotate(" + curtain.rotation + "deg)";
+ 
+    var fabric = document.createElement("div");
+    fabric.className = "curtain-fabric";
+    fabric.style.backgroundImage = "url('" + curtain.image + "')";
+    fabric.style.backgroundSize = "cover";
+    fabric.style.backgroundRepeat = "repeat";
+    fabric.style.backgroundPosition = "center";
+    if(curtain.mirrored){
+      fabric.style.transform = "scaleX(-1)";
+    }
+    layer.appendChild(fabric);
+ 
+    if(wandPreference === "yes"){
+      fabric.classList.add("with-rod");
+ 
+      var pleats = document.createElement("div");
+      pleats.className = "header-pleats";
+      pleats.setAttribute("aria-hidden", "true");
+      fabric.appendChild(pleats);
+ 
+      var wand = document.createElement("div");
+      wand.className = "curtain-wand";
+      wand.setAttribute("aria-hidden", "true");
+      layer.appendChild(wand);
+    }
+ 
+    var duplicateBtn = document.createElement("button");
+    duplicateBtn.className = "duplicate-curtain";
+    duplicateBtn.setAttribute("aria-label", "Duplicate and mirror to the other side");
+    duplicateBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" width="12" height="12"><rect x="8" y="8" width="12" height="12" rx="2"/><path d="M4 16V6a2 2 0 0 1 2-2h10"/></svg>';
+    duplicateBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      duplicateCurtain(curtain.id);
+    });
+    layer.appendChild(duplicateBtn);
+ 
+    var removeBtn = document.createElement("button");
+    removeBtn.className = "remove-curtain";
+    removeBtn.setAttribute("aria-label", "Remove curtain");
+    removeBtn.innerHTML = "&times;";
+    removeBtn.addEventListener("click", function(e){
+      e.stopPropagation();
+      removeCurtain(curtain.id);
+    });
+    layer.appendChild(removeBtn);
+ 
+    var rotateHandle = document.createElement("div");
+    rotateHandle.className = "handle rotate";
+    rotateHandle.setAttribute("aria-label", "Rotate curtain");
+    layer.appendChild(rotateHandle);
+ 
+    var resizeHandle = document.createElement("div");
+    resizeHandle.className = "handle resize-br";
+    resizeHandle.setAttribute("aria-label", "Resize curtain");
+    layer.appendChild(resizeHandle);
+ 
+    layer.addEventListener("pointerdown", function(e){
+      activeCurtainId = curtain.id;
+      startDrag(e, "move", curtain.id);
+    });
+    resizeHandle.addEventListener("pointerdown", function(e){
+      e.stopPropagation();
+      activeCurtainId = curtain.id;
+      startDrag(e, "resize", curtain.id);
+    });
+    rotateHandle.addEventListener("pointerdown", function(e){
+      e.stopPropagation();
+      activeCurtainId = curtain.id;
+      startDrag(e, "rotate", curtain.id);
+    });
+ 
+    stage.appendChild(layer);
+  }
+ 
+  function startDrag(e, type, curtainId){
+    var curtain = findCurtain(curtainId);
+    if(!curtain) return;
+    var layer = stage.querySelector('.curtain-layer[data-curtain-id="' + curtainId + '"]');
+    if(!layer) return;
+    layer.classList.add("dragging");
+    var stageRect = stage.getBoundingClientRect();
+    var startX = e.clientX, startY = e.clientY;
+    var orig = { x: curtain.x, y: curtain.y, w: curtain.w, h: curtain.h, rotation: curtain.rotation };
+    var centerX = stageRect.left + orig.x + orig.w / 2;
+    var centerY = stageRect.top + orig.y + orig.h / 2;
+ 
+    function onMove(ev){
+      var dx = ev.clientX - startX;
+      var dy = ev.clientY - startY;
+ 
+      if(type === "move"){
+        var nx = orig.x + dx;
+        var ny = orig.y + dy;
+        nx = Math.max(-orig.w * 0.4, Math.min(stageRect.width - orig.w * 0.6, nx));
+        ny = Math.max(-orig.h * 0.2, Math.min(stageRect.height - orig.h * 0.2, ny));
+        curtain.x = nx;
+        curtain.y = ny;
+      } else if(type === "resize"){
+        var nw = Math.max(40, orig.w + dx);
+        var nh = Math.max(60, orig.h + dy);
+        curtain.w = nw;
+        curtain.h = nh;
+      } else if(type === "rotate"){
+        var angle = Math.atan2(ev.clientY - centerY, ev.clientX - centerX);
+        var deg = angle * (180 / Math.PI) + 90;
+        curtain.rotation = Math.round(deg);
+      }
+      applyLayerStyle(curtain);
+    }
+ 
+    function onUp(){
+      document.removeEventListener("pointermove", onMove);
+      document.removeEventListener("pointerup", onUp);
+      var layerEl = stage.querySelector('.curtain-layer[data-curtain-id="' + curtainId + '"]');
+      if(layerEl) layerEl.classList.remove("dragging");
+    }
+ 
+    document.addEventListener("pointermove", onMove);
+    document.addEventListener("pointerup", onUp);
+  }
+ 
+  function applyLayerStyle(curtain){
+    var layer = stage.querySelector('.curtain-layer[data-curtain-id="' + curtain.id + '"]');
+    if(!layer) return;
+    layer.style.left = curtain.x + "px";
+    layer.style.top = curtain.y + "px";
+    layer.style.width = curtain.w + "px";
+    layer.style.height = curtain.h + "px";
+    layer.style.transform = "rotate(" + curtain.rotation + "deg)";
+  }
+ 
+  // ---------- Render swatch rail ----------
+  function renderSwatches(){
+    swatchGrid.innerHTML = "";
+    if(catalog.length === 0){
+      var empty = document.createElement("div");
+      empty.className = "empty-catalog";
+      empty.style.gridColumn = "1 / -1";
+      empty.textContent = "No curtains in the collection yet. Add some from Catalog admin.";
+      swatchGrid.appendChild(empty);
+      return;
+    }
+    catalog.forEach(function(item){
+      var card = document.createElement("button");
+      card.type = "button";
+      card.className = "swatch-card";
+      card.setAttribute("data-id", item.id);
+ 
+      var thumb = document.createElement("div");
+      thumb.className = "swatch-thumb";
+      thumb.style.backgroundImage = "url('" + item.image + "')";
+      card.appendChild(thumb);
+ 
+      var name = document.createElement("p");
+      name.className = "swatch-name";
+      name.textContent = item.name || "Untitled fabric";
+      card.appendChild(name);
+ 
+      if(item.price){
+        var price = document.createElement("p");
+        price.className = "swatch-price";
+        price.textContent = item.price;
+        card.appendChild(price);
+      }
+ 
+      card.addEventListener("click", function(){ selectCurtain(item); });
+      swatchGrid.appendChild(card);
+    });
+  }
+ 
+  // ---------- Admin view ----------
+  function renderAdmin(){
+    adminGrid.innerHTML = "";
+    if(catalog.length === 0){
+      var empty = document.createElement("div");
+      empty.className = "admin-empty";
+      empty.innerHTML =
+        '<div class="icon-circle"><svg viewBox="0 0 24 24" fill="none" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 16V4M12 4l-4 4M12 4l4 4"/><path d="M4 16v3a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-3"/></svg></div>' +
+        '<p>Nothing in the catalog yet.<br>Add your first curtain photo above.</p>';
+      adminGrid.appendChild(empty);
+      return;
+    }
+    catalog.forEach(function(item){
+      var card = document.createElement("div");
+      card.className = "admin-card";
+ 
+      var thumb = document.createElement("div");
+      thumb.className = "thumb";
+      thumb.style.backgroundImage = "url('" + item.image + "')";
+      card.appendChild(thumb);
+ 
+      var body = document.createElement("div");
+      body.className = "body";
+ 
+      var nameInput = document.createElement("input");
+      nameInput.className = "field name";
+      nameInput.value = item.name || "";
+      nameInput.placeholder = "Fabric name";
+      nameInput.addEventListener("change", function(){
+        item.name = nameInput.value;
+        updateCurtainInDb(item.id, { name: item.name });
+        renderSwatches();
+      });
+      body.appendChild(nameInput);
+ 
+      var priceInput = document.createElement("input");
+      priceInput.className = "field price";
+      priceInput.value = item.price || "";
+      priceInput.placeholder = "Price, e.g. $48/m";
+      priceInput.addEventListener("change", function(){
+        item.price = priceInput.value;
+        updateCurtainInDb(item.id, { price: item.price });
+        renderSwatches();
+      });
+      body.appendChild(priceInput);
+ 
+      var row = document.createElement("div");
+      row.className = "row";
+      var label = document.createElement("span");
+      label.style.fontSize = "11.5px";
+      label.style.color = "var(--ink-faint)";
+      label.textContent = "In collection";
+ 
+      var delBtn = document.createElement("button");
+      delBtn.className = "icon-btn";
+      delBtn.setAttribute("aria-label", "Remove this curtain");
+      delBtn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-13M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></svg>';
+      delBtn.addEventListener("click", function(){
+        deleteCurtainFromDb(item.id).then(function(){
+          catalog = catalog.filter(function(c){ return c.id !== item.id; });
+          renderAdmin();
+          renderSwatches();
+          showToast("Removed from catalog.");
+        });
+      });
+ 
+      row.appendChild(label);
+      row.appendChild(delBtn);
+      body.appendChild(row);
+ 
+      card.appendChild(body);
+      adminGrid.appendChild(card);
+    });
+  }
+ 
+  adminUploadInput.addEventListener("change", function(e){
+    var files = Array.prototype.slice.call(e.target.files);
+    if(files.length === 0) return;
+    Promise.all(files.map(function(file){
+      return fileToCompressedDataUrl(file, 900).then(function(dataUrl){
+        var draft = { name: file.name.replace(/\.[^/.]+$/, ""), price: "", image: dataUrl };
+        return addCurtainToDb(draft);
+      });
+    })).then(function(insertedRows){
+      var newItems = insertedRows
+        .filter(function(row){ return row; }) // drop any that failed to save
+        .map(function(row){
+          return { id: row.id, name: row.name, price: row.price, image: row.image };
+        });
+      catalog = catalog.concat(newItems);
+      renderAdmin();
+      renderSwatches();
+      if(newItems.length){
+        showToast(newItems.length > 1 ? newItems.length + " curtains added." : "Curtain added.");
+      }
+    });
+    adminUploadInput.value = "";
+  });
+ 
+  // ---------- Init ----------
+  loadCatalog().then(function(){
+    renderSwatches();
+  });
+  renderStage();
+})();
+</script>
+</body>
+</html>
+ 
