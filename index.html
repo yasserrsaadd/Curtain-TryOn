@@ -37,7 +37,7 @@
   @media (prefers-reduced-motion: reduce){
     *{animation-duration:0.001ms !important; transition-duration:0.001ms !important;}
   }
- 
+
   /* ---------- Top bar ---------- */
   .topbar{
     display:flex;
@@ -89,7 +89,7 @@
     background:var(--ink);
     color:#fff;
   }
- 
+
   /* ---------- Layout shells ---------- */
   .view{
     display:none;
@@ -98,7 +98,7 @@
     padding:48px 40px 100px;
   }
   .view.active{display:block;}
- 
+
   /* ---------- Customer hero ---------- */
   .hero{
     text-align:center;
@@ -118,7 +118,7 @@
     line-height:1.65;
     margin:0;
   }
- 
+
   /* ---------- Workspace ---------- */
   .workspace{
     display:grid;
@@ -135,7 +135,7 @@
     .swatch-panel{margin-top:8px;}
     .swatch-grid{max-height:none;}
   }
- 
+
   @media (max-width:480px){
     .brand-tag{display:none;}
     .brand-mark{font-size:22px;}
@@ -154,7 +154,7 @@
     .admin-grid{grid-template-columns:repeat(auto-fill, minmax(140px, 1fr));gap:10px;}
     .toast{left:14px;right:14px;transform:translateY(20px);width:auto;text-align:center;}
     .toast.show{transform:translateY(0);}
- 
+
     /* Bigger touch targets for curtain controls — visual size stays via inner dot, hit area grows */
     .handle{width:24px;height:24px;}
     .handle.resize-br{right:-12px;bottom:-12px;}
@@ -166,7 +166,7 @@
     .duplicate-curtain svg{width:14px;height:14px;}
     .upload-prompt{padding:24px 16px;}
   }
- 
+
   .stage-card{
     background:var(--bg-panel);
     border:1px solid var(--line);
@@ -187,7 +187,7 @@
     touch-action:none;
   }
   .stage.has-photo{background:#1c1b19;}
- 
+
   .stage img.room-photo{
     position:absolute;
     inset:0;
@@ -197,7 +197,7 @@
     user-select:none;
     -webkit-user-drag:none;
   }
- 
+
   .upload-prompt{
     display:flex;
     flex-direction:column;
@@ -222,7 +222,7 @@
   .upload-prompt strong{color:var(--ink);font-size:15px;font-weight:500;}
   .upload-prompt span.sub{font-size:13px;}
   .upload-prompt input{display:none;}
- 
+
   /* curtain overlay element */
   .curtain-layer{
     position:absolute;
@@ -234,33 +234,65 @@
     width:100%;
     height:100%;
     border-radius:2px 2px 6px 6px;
-    box-shadow:0 6px 18px rgba(0,0,0,0.35);
+    box-shadow:0 8px 22px rgba(0,0,0,0.4), 0 2px 6px rgba(0,0,0,0.25);
     position:relative;
     overflow:hidden;
   }
-  .curtain-fabric::after{
-    content:"";
-    position:absolute;
-    inset:0;
-    background:repeating-linear-gradient(
-      90deg,
-      rgba(0,0,0,0.16) 0px,
-      rgba(0,0,0,0.16) 2px,
-      rgba(255,255,255,0.10) 2px,
-      rgba(255,255,255,0.10) 9px,
-      rgba(0,0,0,0.05) 9px,
-      rgba(0,0,0,0.05) 16px
-    );
-    mix-blend-mode:multiply;
-    pointer-events:none;
-  }
+
+  /* subtle fabric weave grain — present in both modes, gives cloth-like depth instead of flat print */
   .curtain-fabric::before{
     content:"";
     position:absolute;
     inset:0;
-    background:linear-gradient(180deg, rgba(255,255,255,0.18), rgba(0,0,0,0.12) 90%);
+    background-image:
+      repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 1px, transparent 1px, transparent 3px),
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.04) 0px, rgba(255,255,255,0.04) 1px, transparent 1px, transparent 3px);
+    mix-blend-mode:multiply;
     pointer-events:none;
+    z-index:1;
   }
+
+  /* ===== STRAIGHT (flat panel) mode — even light, minimal undulation ===== */
+  .curtain-fabric.style-straight::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:linear-gradient(180deg, rgba(255,255,255,0.22) 0%, rgba(255,255,255,0.04) 12%, rgba(0,0,0,0.10) 92%, rgba(0,0,0,0.22) 100%),
+      linear-gradient(90deg, rgba(0,0,0,0.10) 0%, transparent 8%, transparent 92%, rgba(0,0,0,0.10) 100%);
+    pointer-events:none;
+    z-index:2;
+  }
+
+  /* ===== FOLDED (pleated) mode — irregular vertical pleats with real light/shadow contrast ===== */
+  .curtain-fabric.style-folded::after{
+    content:"";
+    position:absolute;
+    inset:0;
+    background-image: repeating-linear-gradient(
+      90deg,
+      rgba(0,0,0,0.45) 0%,
+      rgba(0,0,0,0.45) 3%,
+      rgba(255,255,255,0.32) 3%,
+      rgba(255,255,255,0.30) 8%,
+      rgba(0,0,0,0.18) 8%,
+      rgba(0,0,0,0.05) 12%,
+      rgba(255,255,255,0.18) 12%,
+      rgba(0,0,0,0.30) 17%,
+      rgba(0,0,0,0.30) 19%
+    );
+    background-size:38px 100%;
+    mix-blend-mode:multiply;
+    pointer-events:none;
+    z-index:2;
+  }
+  .curtain-fabric.style-folded::before{
+    /* slightly stronger grain under the pleats so folds don't look glassy */
+    opacity:0.85;
+  }
+  .curtain-fabric.style-folded{
+    box-shadow:0 10px 26px rgba(0,0,0,0.45), 0 3px 8px rgba(0,0,0,0.3);
+  }
+
   .curtain-fabric.with-rod{
     border-radius:1px 1px 6px 6px;
   }
@@ -280,8 +312,9 @@
     );
     border-bottom:1px solid rgba(0,0,0,0.25);
     pointer-events:none;
+    z-index:3;
   }
- 
+
   .handle{
     position:absolute;
     width:16px;
@@ -348,7 +381,7 @@
     border-color:var(--sage-dark);
     color:var(--sage-dark);
   }
- 
+
   /* curtain wand / rod — runs across the top, holding the curtain up */
   .curtain-wand{
     position:absolute;
@@ -377,7 +410,7 @@
   }
   .curtain-wand::before{ left:-5px; }
   .curtain-wand::after{ right:-5px; }
- 
+
   .stage-actions{
     display:flex;
     justify-content:space-between;
@@ -401,7 +434,7 @@
     transition:border-color 0.15s ease, color 0.15s ease;
   }
   .ghost-btn:hover{border-color:var(--ink-faint);color:var(--ink);}
- 
+
   /* ---------- Swatch rail ---------- */
   .swatch-panel h2{
     font-family:var(--serif);
@@ -414,7 +447,7 @@
     color:var(--ink-soft);
     margin:0 0 16px;
   }
- 
+
   .wand-toggle{
     margin:0 0 18px;
     padding:12px 14px;
@@ -498,7 +531,7 @@
     font-size:13px;
     line-height:1.6;
   }
- 
+
   /* ---------- Admin view ---------- */
   .admin-head{
     display:flex;
@@ -535,7 +568,7 @@
   }
   .btn-primary:hover{background:var(--terracotta-dark);}
   .btn-primary input{display:none;}
- 
+
   .admin-grid{
     display:grid;
     grid-template-columns:repeat(auto-fill, minmax(190px, 1fr));
@@ -590,7 +623,7 @@
   }
   .icon-btn:hover{color:var(--danger);}
   .icon-btn svg{width:16px;height:16px;}
- 
+
   .admin-empty{
     grid-column:1/-1;
     text-align:center;
@@ -604,7 +637,7 @@
     margin:0 auto 16px;
   }
   .admin-empty .icon-circle svg{width:22px;height:22px;stroke:var(--sage-dark);}
- 
+
   .toast{
     position:fixed;
     bottom:28px;
@@ -624,21 +657,21 @@
     opacity:1;
     transform:translateX(-50%) translateY(0);
   }
- 
+
   .footer-note{
     text-align:center;
     margin-top:60px;
     font-size:12px;
     color:var(--ink-faint);
   }
- 
+
   .visually-hidden{
     position:absolute;
     width:1px;height:1px;
     overflow:hidden;
     clip:rect(0,0,0,0);
   }
- 
+
   :focus-visible{
     outline:2px solid var(--sage-dark);
     outline-offset:2px;
@@ -646,7 +679,7 @@
 </style>
 </head>
 <body>
- 
+
 <div class="topbar">
   <div class="brand">
     <span class="brand-mark">Drape</span>
@@ -657,14 +690,14 @@
     <button id="tab-admin" role="tab" aria-selected="false">Catalog admin</button>
   </div>
 </div>
- 
+
 <!-- ===================== CUSTOMER VIEW ===================== -->
 <main class="view active" id="view-customer">
   <div class="hero">
     <h1>See it on your window<br>before it's on order</h1>
     <p>Upload a photo of your window, pick a fabric from the collection, then drag, resize, and rotate it into place.</p>
   </div>
- 
+
   <div class="workspace">
     <div class="stage-card">
       <div class="stage" id="stage">
@@ -682,11 +715,11 @@
         <button class="ghost-btn" id="change-photo-btn" style="display:none;">Change photo</button>
       </div>
     </div>
- 
+
     <div class="swatch-panel">
       <h2>Collection</h2>
       <p class="panel-sub">Tap a fabric to place it on your window.</p>
- 
+
       <div class="wand-toggle">
         <span class="wand-toggle-label">Curtain wand</span>
         <div class="wand-options" role="group" aria-label="Curtain wand preference">
@@ -694,16 +727,24 @@
           <button type="button" id="wand-no" class="active" data-value="no">Without wand</button>
         </div>
       </div>
- 
+
+      <div class="wand-toggle">
+        <span class="wand-toggle-label">Curtain style</span>
+        <div class="wand-options" role="group" aria-label="Curtain fold preference">
+          <button type="button" id="style-folded" class="active" data-value="folded">Folded</button>
+          <button type="button" id="style-straight" data-value="straight">Straight</button>
+        </div>
+      </div>
+
       <div class="swatch-grid" id="swatch-grid">
         <!-- populated by JS -->
       </div>
     </div>
   </div>
- 
+
   <p class="footer-note">Placement is an approximation to help you compare colors and styles &mdash; actual fit depends on your measurements.</p>
 </main>
- 
+
 <!-- ===================== ADMIN VIEW ===================== -->
 <main class="view" id="view-admin">
   <div class="admin-head">
@@ -717,26 +758,27 @@
       <input type="file" id="admin-upload-input" accept="image/*" multiple>
     </label>
   </div>
- 
+
   <div class="admin-grid" id="admin-grid">
     <!-- populated by JS -->
   </div>
 </main>
- 
+
 <div class="toast" id="toast"></div>
- 
+
 <script>
 (function(){
   "use strict";
- 
+
   // ---------- State ----------
   var catalog = [];          // [{id, name, price, image}]
   var roomPhotoDataUrl = null;
   var curtains = [];         // [{id, image, x, y, w, h, rotation, mirrored}]
   var activeCurtainId = null; // which one was placed/duplicated most recently (for "select fabric" UX)
   var wandPreference = "no"; // "yes" | "no" — customer's stated preference, included if you add ordering later
+  var foldStyle = "folded"; // "folded" | "straight" — how the fabric texture renders
   var dragState = null;
- 
+
   // ---------- Supabase configuration ----------
   // Fill these in with your own project's values (Project Settings → API in the Supabase dashboard).
   // The anon/public key is safe to expose in client-side code — it only allows what your
@@ -744,13 +786,13 @@
   var SUPABASE_URL = "https://gqniatqsznfsysewawqa.supabase.co";
   var SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdxbmlhdHFzem5mc3lzZXdhd3FhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODE5MzMyMDQsImV4cCI6MjA5NzUwOTIwNH0.NBO1yUybQvvknjbbQl420D1P0HU5cBEU2_K3m5jXkxc";
   var SUPABASE_TABLE = "curtains";
- 
+
   // ---------- Elements ----------
   var tabCustomer = document.getElementById("tab-customer");
   var tabAdmin = document.getElementById("tab-admin");
   var viewCustomer = document.getElementById("view-customer");
   var viewAdmin = document.getElementById("view-admin");
- 
+
   var stage = document.getElementById("stage");
   var uploadPrompt = document.getElementById("upload-prompt");
   var photoInput = document.getElementById("photo-input");
@@ -759,12 +801,14 @@
   var swatchGrid = document.getElementById("swatch-grid");
   var wandYesBtn = document.getElementById("wand-yes");
   var wandNoBtn = document.getElementById("wand-no");
- 
+  var styleFoldedBtn = document.getElementById("style-folded");
+  var styleStraightBtn = document.getElementById("style-straight");
+
   var adminGrid = document.getElementById("admin-grid");
   var adminUploadInput = document.getElementById("admin-upload-input");
- 
+
   var toastEl = document.getElementById("toast");
- 
+
   // ---------- Utilities ----------
   function showToast(msg){
     toastEl.textContent = msg;
@@ -772,11 +816,11 @@
     clearTimeout(toastEl._t);
     toastEl._t = setTimeout(function(){ toastEl.classList.remove("show"); }, 2200);
   }
- 
+
   function uid(){
     return "c_" + Date.now().toString(36) + "_" + Math.random().toString(36).slice(2,8);
   }
- 
+
   function fileToDataUrl(file){
     return new Promise(function(resolve, reject){
       var reader = new FileReader();
@@ -785,7 +829,7 @@
       reader.readAsDataURL(file);
     });
   }
- 
+
   // Downscale large images so storage stays well under limits
   function fileToCompressedDataUrl(file, maxDim){
     maxDim = maxDim || 1000;
@@ -809,7 +853,7 @@
       });
     });
   }
- 
+
   // ---------- Storage (Supabase — shared catalog, persists across hosting/devices) ----------
   function supabaseHeaders(){
     return {
@@ -818,7 +862,7 @@
       "Authorization": "Bearer " + SUPABASE_ANON_KEY
     };
   }
- 
+
   function loadCatalog(){
     return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE + "?select=*&order=created_at.asc", {
       method: "GET",
@@ -839,7 +883,7 @@
         showToast("Couldn't load the catalog — check the connection.");
       });
   }
- 
+
   function addCurtainToDb(item){
     return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE, {
       method: "POST",
@@ -859,7 +903,7 @@
         return null;
       });
   }
- 
+
   function updateCurtainInDb(id, fields){
     return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE + "?id=eq." + encodeURIComponent(id), {
       method: "PATCH",
@@ -874,7 +918,7 @@
         showToast("Couldn't save that change.");
       });
   }
- 
+
   function deleteCurtainFromDb(id){
     return fetch(SUPABASE_URL + "/rest/v1/" + SUPABASE_TABLE + "?id=eq." + encodeURIComponent(id), {
       method: "DELETE",
@@ -888,7 +932,7 @@
         showToast("Couldn't remove that item — try again.");
       });
   }
- 
+
   // ---------- Tab switching ----------
   function setMode(mode){
     var isAdmin = mode === "admin";
@@ -901,7 +945,7 @@
   }
   tabCustomer.addEventListener("click", function(){ setMode("customer"); });
   tabAdmin.addEventListener("click", function(){ setMode("admin"); renderAdmin(); });
- 
+
   // ---------- Customer: photo upload ----------
   function handlePhotoFile(file){
     if(!file) return;
@@ -913,16 +957,16 @@
       changePhotoBtn.style.display = "inline-block";
     });
   }
- 
+
   photoInput.addEventListener("change", function(e){
     handlePhotoFile(e.target.files[0]);
   });
- 
+
   changePhotoBtn.addEventListener("click", function(){
     photoInput.value = "";
     photoInput.click();
   });
- 
+
   // ---------- Curtain wand preference ----------
   function setWandPreference(value){
     wandPreference = value;
@@ -934,7 +978,18 @@
   }
   wandYesBtn.addEventListener("click", function(){ setWandPreference("yes"); });
   wandNoBtn.addEventListener("click", function(){ setWandPreference("no"); });
- 
+
+  function setFoldStyle(value){
+    foldStyle = value;
+    styleFoldedBtn.classList.toggle("active", value === "folded");
+    styleStraightBtn.classList.toggle("active", value === "straight");
+    if(curtains.length){
+      renderAllCurtainLayers();
+    }
+  }
+  styleFoldedBtn.addEventListener("click", function(){ setFoldStyle("folded"); });
+  styleStraightBtn.addEventListener("click", function(){ setFoldStyle("straight"); });
+
   function renderStage(){
     stage.innerHTML = "";
     if(!roomPhotoDataUrl){
@@ -949,14 +1004,14 @@
     img.className = "room-photo";
     img.alt = "Your uploaded window photo";
     stage.appendChild(img);
- 
+
     if(curtains.length){
       renderAllCurtainLayers();
     } else {
       stageHint.textContent = "Pick a fabric from the collection to place it on your window.";
     }
   }
- 
+
   // ---------- Customer: curtain placement ----------
   function defaultPlacementForStage(){
     var rect = stage.getBoundingClientRect();
@@ -968,14 +1023,14 @@
     var y = Math.max(rect.height * 0.06, 44);
     return { x: x, y: y, w: w, h: h, rotation: 0 };
   }
- 
+
   function findCurtain(id){
     for(var i = 0; i < curtains.length; i++){
       if(curtains[i].id === id) return curtains[i];
     }
     return null;
   }
- 
+
   function selectCurtain(item){
     if(!roomPhotoDataUrl){
       showToast("Upload a window photo first.");
@@ -1002,23 +1057,23 @@
       ? "Drag either panel to move it, duplicate again for more."
       : "Drag to move, corner to resize, top handle to rotate.";
   }
- 
+
   function highlightSelectedSwatch(id){
     var cards = swatchGrid.querySelectorAll(".swatch-card");
     cards.forEach(function(c){
       c.classList.toggle("selected", c.getAttribute("data-id") === id);
     });
   }
- 
+
   function duplicateCurtain(id){
     var source = findCurtain(id);
     if(!source) return;
     var rect = stage.getBoundingClientRect();
- 
+
     // Mirror placement to the opposite side of the stage, flipped horizontally —
     // mimics a matching curtain panel on the other side of a window.
     var mirroredX = rect.width - source.x - source.w;
- 
+
     var copy = {
       id: uid(),
       image: source.image,
@@ -1035,7 +1090,7 @@
     stageHint.textContent = "Drag either panel to fine-tune its side of the window.";
     showToast("Duplicated and mirrored to the other side.");
   }
- 
+
   function removeCurtain(id){
     curtains = curtains.filter(function(c){ return c.id !== id; });
     if(activeCurtainId === id){
@@ -1044,7 +1099,7 @@
     renderStage();
     if(curtains.length === 0) highlightSelectedSwatch(null);
   }
- 
+
   function renderAllCurtainLayers(){
     var existingLayers = stage.querySelectorAll(".curtain-layer");
     existingLayers.forEach(function(el){ el.remove(); });
@@ -1052,7 +1107,7 @@
       renderCurtainLayer(curtain);
     });
   }
- 
+
   function renderCurtainLayer(curtain){
     var layer = document.createElement("div");
     layer.className = "curtain-layer";
@@ -1062,9 +1117,9 @@
     layer.style.width = curtain.w + "px";
     layer.style.height = curtain.h + "px";
     layer.style.transform = "rotate(" + curtain.rotation + "deg)";
- 
+
     var fabric = document.createElement("div");
-    fabric.className = "curtain-fabric";
+    fabric.className = "curtain-fabric " + (foldStyle === "straight" ? "style-straight" : "style-folded");
     fabric.style.backgroundImage = "url('" + curtain.image + "')";
     fabric.style.backgroundSize = "cover";
     fabric.style.backgroundRepeat = "repeat";
@@ -1073,21 +1128,21 @@
       fabric.style.transform = "scaleX(-1)";
     }
     layer.appendChild(fabric);
- 
+
     if(wandPreference === "yes"){
       fabric.classList.add("with-rod");
- 
+
       var pleats = document.createElement("div");
       pleats.className = "header-pleats";
       pleats.setAttribute("aria-hidden", "true");
       fabric.appendChild(pleats);
- 
+
       var wand = document.createElement("div");
       wand.className = "curtain-wand";
       wand.setAttribute("aria-hidden", "true");
       layer.appendChild(wand);
     }
- 
+
     var duplicateBtn = document.createElement("button");
     duplicateBtn.className = "duplicate-curtain";
     duplicateBtn.setAttribute("aria-label", "Duplicate and mirror to the other side");
@@ -1097,7 +1152,7 @@
       duplicateCurtain(curtain.id);
     });
     layer.appendChild(duplicateBtn);
- 
+
     var removeBtn = document.createElement("button");
     removeBtn.className = "remove-curtain";
     removeBtn.setAttribute("aria-label", "Remove curtain");
@@ -1107,17 +1162,17 @@
       removeCurtain(curtain.id);
     });
     layer.appendChild(removeBtn);
- 
+
     var rotateHandle = document.createElement("div");
     rotateHandle.className = "handle rotate";
     rotateHandle.setAttribute("aria-label", "Rotate curtain");
     layer.appendChild(rotateHandle);
- 
+
     var resizeHandle = document.createElement("div");
     resizeHandle.className = "handle resize-br";
     resizeHandle.setAttribute("aria-label", "Resize curtain");
     layer.appendChild(resizeHandle);
- 
+
     layer.addEventListener("pointerdown", function(e){
       activeCurtainId = curtain.id;
       startDrag(e, "move", curtain.id);
@@ -1132,10 +1187,10 @@
       activeCurtainId = curtain.id;
       startDrag(e, "rotate", curtain.id);
     });
- 
+
     stage.appendChild(layer);
   }
- 
+
   function startDrag(e, type, curtainId){
     var curtain = findCurtain(curtainId);
     if(!curtain) return;
@@ -1147,11 +1202,11 @@
     var orig = { x: curtain.x, y: curtain.y, w: curtain.w, h: curtain.h, rotation: curtain.rotation };
     var centerX = stageRect.left + orig.x + orig.w / 2;
     var centerY = stageRect.top + orig.y + orig.h / 2;
- 
+
     function onMove(ev){
       var dx = ev.clientX - startX;
       var dy = ev.clientY - startY;
- 
+
       if(type === "move"){
         var nx = orig.x + dx;
         var ny = orig.y + dy;
@@ -1171,18 +1226,18 @@
       }
       applyLayerStyle(curtain);
     }
- 
+
     function onUp(){
       document.removeEventListener("pointermove", onMove);
       document.removeEventListener("pointerup", onUp);
       var layerEl = stage.querySelector('.curtain-layer[data-curtain-id="' + curtainId + '"]');
       if(layerEl) layerEl.classList.remove("dragging");
     }
- 
+
     document.addEventListener("pointermove", onMove);
     document.addEventListener("pointerup", onUp);
   }
- 
+
   function applyLayerStyle(curtain){
     var layer = stage.querySelector('.curtain-layer[data-curtain-id="' + curtain.id + '"]');
     if(!layer) return;
@@ -1192,7 +1247,7 @@
     layer.style.height = curtain.h + "px";
     layer.style.transform = "rotate(" + curtain.rotation + "deg)";
   }
- 
+
   // ---------- Render swatch rail ----------
   function renderSwatches(){
     swatchGrid.innerHTML = "";
@@ -1209,29 +1264,29 @@
       card.type = "button";
       card.className = "swatch-card";
       card.setAttribute("data-id", item.id);
- 
+
       var thumb = document.createElement("div");
       thumb.className = "swatch-thumb";
       thumb.style.backgroundImage = "url('" + item.image + "')";
       card.appendChild(thumb);
- 
+
       var name = document.createElement("p");
       name.className = "swatch-name";
       name.textContent = item.name || "Untitled fabric";
       card.appendChild(name);
- 
+
       if(item.price){
         var price = document.createElement("p");
         price.className = "swatch-price";
         price.textContent = item.price;
         card.appendChild(price);
       }
- 
+
       card.addEventListener("click", function(){ selectCurtain(item); });
       swatchGrid.appendChild(card);
     });
   }
- 
+
   // ---------- Admin view ----------
   function renderAdmin(){
     adminGrid.innerHTML = "";
@@ -1247,15 +1302,15 @@
     catalog.forEach(function(item){
       var card = document.createElement("div");
       card.className = "admin-card";
- 
+
       var thumb = document.createElement("div");
       thumb.className = "thumb";
       thumb.style.backgroundImage = "url('" + item.image + "')";
       card.appendChild(thumb);
- 
+
       var body = document.createElement("div");
       body.className = "body";
- 
+
       var nameInput = document.createElement("input");
       nameInput.className = "field name";
       nameInput.value = item.name || "";
@@ -1266,7 +1321,7 @@
         renderSwatches();
       });
       body.appendChild(nameInput);
- 
+
       var priceInput = document.createElement("input");
       priceInput.className = "field price";
       priceInput.value = item.price || "";
@@ -1277,14 +1332,14 @@
         renderSwatches();
       });
       body.appendChild(priceInput);
- 
+
       var row = document.createElement("div");
       row.className = "row";
       var label = document.createElement("span");
       label.style.fontSize = "11.5px";
       label.style.color = "var(--ink-faint)";
       label.textContent = "In collection";
- 
+
       var delBtn = document.createElement("button");
       delBtn.className = "icon-btn";
       delBtn.setAttribute("aria-label", "Remove this curtain");
@@ -1297,16 +1352,16 @@
           showToast("Removed from catalog.");
         });
       });
- 
+
       row.appendChild(label);
       row.appendChild(delBtn);
       body.appendChild(row);
- 
+
       card.appendChild(body);
       adminGrid.appendChild(card);
     });
   }
- 
+
   adminUploadInput.addEventListener("change", function(e){
     var files = Array.prototype.slice.call(e.target.files);
     if(files.length === 0) return;
@@ -1330,7 +1385,7 @@
     });
     adminUploadInput.value = "";
   });
- 
+
   // ---------- Init ----------
   loadCatalog().then(function(){
     renderSwatches();
@@ -1340,4 +1395,3 @@
 </script>
 </body>
 </html>
- 
